@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+# Dynamically source Homebrew/Linuxbrew PATH depending on OS
+if [ -d "/home/linuxbrew/.linuxbrew" ]; then
+  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+elif [ -d "/opt/homebrew" ]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [ -d "/usr/local/bin" ]; then
+  export PATH="/usr/local/bin:$PATH"
+fi
+
+# Fallback check for fzf
+if ! command -v fzf &>/dev/null; then
+  echo "Error: fzf is not installed or not in PATH."
+  read -r -p "Press enter to exit..."
+  exit 1
+fi
+
+# Execute pane switcher
+tmux list-panes -a -F '#S:#I.#P | #{pane_current_command} | #{pane_current_path}' | \
+  fzf --header 'Jump to Pane' --reverse \
+      --bind 'ctrl-x:execute(tmux kill-pane -t $(echo {} | cut -d" " -f1))+reload(tmux list-panes -a -F "#S:#I.#P | #{pane_current_command} | #{pane_current_path}")' \
+      --preview 'tmux capture-pane -ept $(echo {} | cut -d" " -f1) | tail -n ${FZF_PREVIEW_LINES}' \
+      --preview-window 'bottom:70%:border-top' | \
+  cut -d' ' -f1 | xargs tmux switch-client -t
