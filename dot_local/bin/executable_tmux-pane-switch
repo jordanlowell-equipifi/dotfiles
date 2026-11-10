@@ -19,7 +19,7 @@ fi
 # Execute pane switcher
 tmux list-panes -a -F '#S:#I.#P | #{pane_current_command} | #{pane_current_path}' | \
   fzf --header 'Jump to Pane' --reverse \
-      --bind 'ctrl-x:execute(tmux kill-pane -t $(echo {} | cut -d" " -f1))+reload(tmux list-panes -a -F "#S:#I.#P | #{pane_current_command} | #{pane_current_path}")' \
-      --preview 'tmux capture-pane -ept $(echo {} | cut -d" " -f1) | tail -n ${FZF_PREVIEW_LINES}' \
+      --bind 'ctrl-x:execute(tmux kill-pane -t "$(echo {} | sed "s/ | .*//")")+reload(tmux list-panes -a -F "#S:#I.#P | #{pane_current_command} | #{pane_current_path}")' \
+      --preview 'tmux capture-pane -ept "$(echo {} | sed "s/ | .*//")" | tail -n ${FZF_PREVIEW_LINES}' \
       --preview-window 'bottom:70%:border-top' | \
-  cut -d' ' -f1 | xargs tmux switch-client -t
+  sed 's/ | .*//' | xargs -I{} tmux switch-client -t {}
